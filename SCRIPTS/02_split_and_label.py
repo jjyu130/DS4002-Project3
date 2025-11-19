@@ -68,6 +68,16 @@ if not class_dirs:
     print(f"No class subfolders found under: {CLEAN_ROOT}", file=sys.stderr)
     raise SystemExit(1)
 
+# -----------------------------------------------
+# remove ".zip" suffix in folder names
+# -----------------------------------------------
+for d in class_dirs:
+    if d.name.endswith(".zip"):
+        fixed_name = d.name.replace(".zip", "")
+        fixed_path = d.parent / fixed_name
+        print(f"Renaming class folder: {d.name} → {fixed_name}")
+        d.rename(fixed_path)
+        
 # Prepare output directories
 if SPLIT_ROOT.exists() and WIPE_OUTPUT:
     shutil.rmtree(SPLIT_ROOT)
