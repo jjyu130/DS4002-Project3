@@ -26,6 +26,9 @@ Outputs:
         • detected class names
         • test loss and test accuracy
 """
+import os
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"     # disables remapper that breaks MatMul ops
+os.environ["TF_DISABLE_MLIR_GRAPH_OPTIMIZATION"] = "1"
 
 from pathlib import Path
 import numpy as np
@@ -33,7 +36,6 @@ import tensorflow as tf
 from tensorflow.keras import layers, models, optimizers, callbacks
 from tensorflow.keras.applications import InceptionV3
 from tensorflow.keras.applications.inception_v3 import preprocess_input
-
 
 # =========================== CONFIGURATION ===========================
 
