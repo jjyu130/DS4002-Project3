@@ -49,7 +49,7 @@ FINAL_MODEL_PATH = OUTPUT_DIR / "inceptionv3_final.keras"
 
 IMAGE_SIZE = (224, 224)
 BATCH_SIZE = 32
-EPOCHS = 10 #change as needed
+EPOCHS = 1 #change as needed
 RNG_SEED = 42
 AUTOTUNE = tf.data.AUTOTUNE
 
