@@ -48,13 +48,10 @@ FINAL_MODEL_PATH = OUTPUT_DIR / "inceptionv3_final.keras"
 
 IMAGE_SIZE = (224, 224)
 BATCH_SIZE = 32
-EPOCHS = 1
+EPOCHS = 10
 RNG_SEED = 42
 AUTOTUNE = tf.data.AUTOTUNE
 
-print("REPO_ROOT:", REPO_ROOT)
-print("SPLIT_ROOT:", SPLIT_ROOT)
-print("OUTPUT_DIR:", OUTPUT_DIR)
 
 # =====================================================================
 def sanity_check_folders(root: Path):
@@ -84,4 +81,106 @@ def build_dataset_from_dir(split: str, shuffle: bool, return_class_names=False):
     """Load dataset split and apply preprocessing."""
     split_dir = SPLIT_ROOT / split
 
-    ds_raw = tf.keras.utils.image_dataset_from_d
+    ds_raw = tf.keras.utils.image_dataset_from_directory(
+        split_dir,
+        labels="inferred",
+        label_mode="int",
+        image_size=IMAGE_SIZE,
+        batch_size=BATCH_SIZE,
+        shuffle=shuffle,
+        seed=RNG_SEED,
+    )
+
+    class_names = ds_raw.class_names
+
+    if split == "train":
+        print("Detected class names:", class_names)
+        print("\nTrain class counts:")
+        for cname in class_names:
+            count = sum(1 for p in (split_dir / cname).rglob("*") if p.is_file())
+            print(f"  {cname:15s}: {count:5d}")
+        print("")
+
+    def _preprocess(img, label):
+        img = tf.image.convert_image_dtype(img, tf.float32)
+        img = preprocess_input(img)
+        return img, label
+
+    ds = ds_raw.map(_preprocess, num_parallel_calls=AUTOTUNE).prefetch(AUTOTUNE)
+
+    if return_class_names:
+        return ds, class_names
+    return ds
+
+
+def build_inception_model(num_classes: int) -> tf.keras.Model:
+    """Construct a fully fine-tuned InceptionV3 classifier."""
+    base = InceptionV3(
+        include_top=False,
+        weights="imagenet",
+        input_shape=(IMAGE_SIZE[0], IMAGE_SIZE[1], 3),
+    )
+    base.trainable = True  # Full fine-tuning
+
+    inputs = layers.Input(shape=(IMAGE_SIZE[0], IMAGE_SIZE[1], 3))
+    x = base(inputs)
+    x = layers.GlobalAveragePooling2D()(x)
+    x = layers.Dropout(0.3)(x)
+    outputs = layers.Dense(num_classes, activation="softmax")(x)
+
+    model = models.Model(inputs, outputs)
+
+    model.compile(
+        optimizer=optimizers.Adam(learning_rate=1e-5),
+        loss="sparse_categorical_crossentropy",
+        metrics=["accuracy"],
+    )
+
+    model.summary()
+    return model
+
+
+# =====================================================================
+def main():
+    sanity_check_folders(SPLIT_ROOT)
+
+    print(f"Loading datasets from: {SPLIT_ROOT}\n")
+    train_ds, class_names = build_dataset_from_dir("train", True, True)
+    val_ds = build_dataset_from_dir("val", False)
+    test_ds = build_dataset_from_dir("test", False)
+
+    model = build_inception_model(num_classes=len(class_names))
+
+    early_stop = callbacks.EarlyStopping(
+        monitor="val_loss", patience=5, restore_best_weights=True
+    )
+
+    checkpoint = callbacks.ModelCheckpoint(
+        filepath=str(BEST_MODEL_PATH),
+        monitor="val_loss",
+        save_best_only=True,
+        save_weights_only=False,
+        verbose=1,
+    )
+
+    print("\n>>> Starting fine-tuning...\n")
+    model.fit(
+        train_ds,
+        validation_data=val_ds,
+        epochs=EPOCHS,
+        callbacks=[early_stop, checkpoint],
+        verbose=1,
+    )
+
+    print("\nEvaluating on test set...")
+    test_loss, test_acc = model.evaluate(test_ds, verbose=1)
+    print(f"\nTest loss: {test_loss:.4f}")
+    print(f"Test accuracy: {test_acc:.4f}")
+
+    model.save(FINAL_MODEL_PATH)
+    print(f"\nSaved best model to : {BEST_MODEL_PATH}")
+    print(f"Saved final model to: {FINAL_MODEL_PATH}")
+
+
+if __name__ == "__main__":
+    main()
