@@ -1,39 +1,30 @@
 """
 Description:
-    Trains an ImageNet-pretrained InceptionV3 CNN to classify
-    5 classes of satellite weather imagery, using an 80/10/10 folder split. The script builds tf.data pipelines directly
-    from train/val/test directories, performs transfer learning with a frozen
-    InceptionV3 backbone, and evaluates model performance on the held-out test set.
+    Trains an ImageNet-pretrained InceptionV3 CNN
+    to classify five satellite weather event categories using an existing 
+    80/10/10 split created by the preprocessing script. 
 
 Process:
-    1. Loads pre-split 80/10/10 train/val/test folders.
+    1. Loads train/val/test image folders from DATA/dataset_split.
     2. Builds tf.data pipelines from those folders.
-    3. Applies InceptionV3 preprocessing (normalize for ImageNet weights).
-    4. Trains a full fine-tuned InceptionV3 model for up to 100 epochs.
-    5. Evaluates on test split and reports confusion matrix, OA, AA, κ.
-    6. Saves best checkpoint and final trained model.
+    3. Trains a full fine-tuned InceptionV3 model with Adam and sparse categorical cross-entropy.
+    4. Evaluates final performance on the held-out test set.
+    5. Saves best checkpoint and final trained model to OUTPUT/.
 
 Inputs:
-    - DATA/dataset_split/train/{class_name}/*.jpg
-    - DATA/dataset_split/val/{class_name}/*.jpg
-    - DATA/dataset_split/test/{class_name}/*.jpg
-        Stratified 80/10/10 class-balanced splits produced by the split script.
-
+    - ../DATA/dataset_split/train/{class_name}/*.jpg
+    - ../DATA/dataset_split/val/{class_name}/*.jpg
+    - ../DATA/dataset_split/test/{class_name}/*.jpg
 
 Outputs:
-    - OUTPUT/inceptionv3_initial_best.keras
-        Best model during training (according to validation loss).
-
-    - OUTPUT/inceptionv3_initial.keras
-        Final model after training completes.
-
-    - Printed summary of:
-        • train/val/test counts
+    - ../OUTPUT/inceptionv3_best.keras
+        Best model checkpoint (lowest validation loss).
+    - ../OUTPUT/inceptionv3_final.keras
+        Final trained model after all epochs.
+    - Printed summary including:
+        • train/val/test file counts
         • detected class names
-        • confusion matrix
-        • per-class accuracy
-        • OA, AA, kappa
-        • test loss and accuracy
+        • test loss and test accuracy
 """
 
 from pathlib import Path
@@ -58,7 +49,7 @@ FINAL_MODEL_PATH = OUTPUT_DIR / "inceptionv3_final.keras"
 
 IMAGE_SIZE = (224, 224)
 BATCH_SIZE = 32
-EPOCHS = 3
+EPOCHS = 10 #change as needed
 RNG_SEED = 42
 AUTOTUNE = tf.data.AUTOTUNE
 
