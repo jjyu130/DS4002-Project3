@@ -66,7 +66,7 @@ tabular features. The following elements effectively constitute the metadata:*
 | `folder name` | String   | Weather event category associated with the image (`cellconvection`, `duststorm`, `hurricane`, `rollconvection`, `wildfires`). The folder acts as the class label. |
 
 ## Explanatory Plots
-![RGB_by_class.png](RGB_by_class.png)
+![OUTPUT/RGB_by_class.png](OUTPUT/RGB_by_class.png)
 
 **Figure 1**. Mean RGB channel values for each weather event category in the dataset.
 
