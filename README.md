@@ -6,9 +6,15 @@
 - **Software Used**: Python 3
  
 - **Add-on Packages:**  
-  - `pandas` - data loading and manipulation
-  - `numpy` - numerical operations
-  - `matplotlib` – plotting and visualization
+  - `pathlib` – filesystem paths and directory handling
+  - `shutil` – moving, copying, and deleting files during preprocessing
+  - `random` – random sampling for dataset splitting
+  - `numpy` – numerical operations
+  - `PIL` – image loading, conversion, resizing, preprocessing  
+  - `tensorflow` – end-to-end deep learning framework
+    - `keras` → `layers`, `models`, `optimizers`, `callbacks`
+      - `applications` → `InceptionV3`, `preprocess_input`
+    
 
 ## 2. Documentation Map
 The hierarchy of folders and files contained in this project are as follows:
